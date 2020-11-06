@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Filepath to be scanned</title>
+</head>
+<body>
+    <h4>Please, enter the filepath to files you wanna scan for!</h4>
+    <form th:action="@{/filepath}" th:object="${directory}" method="post" >
+        <label for="filepath">Filepath</label>
+        <input id="filepath" type="text" th:field="*{filePath}">
+        <p><input type="submit" value="Submit" /> <input type="reset" value="Reset" /></p>
+    </form>
+</body>
+</html>

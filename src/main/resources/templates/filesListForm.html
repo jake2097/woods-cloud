@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>FilesList</title>
+</head>
+<body>
+
+    <h3>FilesList in the mentioned directory</h3>
+    <table>
+        <tr th:each="file:${files}">
+            <td th:text="${file}"></td>
+        </tr>
+    </table>
+    <a href="/filepath">Enter another filepath</a>
+</body>
+</html>
