@@ -2,6 +2,7 @@ package woods.datamodel;
 
 import lombok.Data;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Data
@@ -16,4 +17,17 @@ public class Area {
     private double PMM2; // fuel in Treliovka
     private List<WorkerStatistics> list;
 
+    @Override
+    public String toString() {
+        return "Area{" +
+                "month=" + month +
+                ", areaName='" + areaName + '\'' +
+                ", square=" + square +
+                ", woods=" + Arrays.toString(woods) +
+                ", woodsSum=" + woodsSum +
+                ", PMM1=" + PMM1 +
+                ", PMM2=" + PMM2 +
+                ", list=" + list +
+                '}';
+    }
 }

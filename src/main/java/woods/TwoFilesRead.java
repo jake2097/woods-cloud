@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Data;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import woods.datamodel.Area;
@@ -13,19 +14,24 @@ import woods.datamodel.Months;
 import woods.datamodel.WoodTypes;
 import woods.datamodel.WorkerStatistics;
 
-public class DataRead implements Runnable {
+@Data
+public class TwoFilesRead implements Runnable {
 
+    public Thread thread;
     public String fileName;
+    public String fileName2;
 
-    public DataRead() {
+    public TwoFilesRead() {
     }
 
-    public DataRead(String fileName) {
+    public TwoFilesRead(String fileName, String fileName2) {
         this.fileName = fileName;
+        this.fileName2 = fileName2;
+        thread = new Thread(this, "TwoThread");
     }
 
-    DataRead obj;
     HSSFWorkbook workBook;
+    HSSFWorkbook workBook2;
     Area area = new Area();
     List<WorkerStatistics> list = new ArrayList<WorkerStatistics>();
 
@@ -34,12 +40,17 @@ public class DataRead implements Runnable {
         try (FileInputStream inputStream = new FileInputStream(new File(fileName))) {
 
             workBook = new HSSFWorkbook(inputStream);
+            this.zagProcessor(fileName);
 
-            if (obj.fileName.equals("заготовка.xls") || obj.fileName.equals("заготовка(12-51).xls")) {
-                obj.zagProcessor(fileName);
-            } else if (obj.fileName.equals("трельовка.xls") || obj.fileName.equals("трельовка(12-51).xls")) {
-                obj.trelProcessor(fileName);
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (FileInputStream inputStream2 = new FileInputStream(new File(fileName2))) {
+
+            workBook2 = new HSSFWorkbook(inputStream2);
+            this.trelProcessor(fileName2);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -179,7 +190,7 @@ public class DataRead implements Runnable {
     public void trelProcessor(String fileName) {
 
         // reading the value of PMM2 from the Трельовка and assigning it to the the PMM2 field of area object
-        area.setPMM2(workBook.getSheet("Сторона1").getRow(11).getCell(12).getNumericCellValue());
+        area.setPMM2(workBook2.getSheet("Сторона1").getRow(11).getCell(12).getNumericCellValue());
 
         //setting the necessary workerNames to read information about
         String[] workerNames = new String[2];
@@ -192,9 +203,9 @@ public class DataRead implements Runnable {
         double[] salaries = new double[3];
 
         for (int i = 0; i < allWorkers.length; i++) {
-            allWorkers[i] = workBook.getSheet("Сторона2 (2)").getRow(4 + i).getCell(2).getStringCellValue();
-            days[i] = workBook.getSheet("Сторона2 (2)").getRow(4 + i).getCell(18).getNumericCellValue();
-            salaries[i] = workBook.getSheet("Сторона2 (2)").getRow(4 + i).getCell(20).getNumericCellValue();
+            allWorkers[i] = workBook2.getSheet("Сторона2 (2)").getRow(4 + i).getCell(1).getStringCellValue();
+            days[i] = workBook2.getSheet("Сторона2 (2)").getRow(4 + i).getCell(18).getNumericCellValue();
+            salaries[i] = workBook2.getSheet("Сторона2 (2)").getRow(4 + i).getCell(20).getNumericCellValue();
         }
 
         WorkerStatistics worker5 = new WorkerStatistics();
@@ -203,12 +214,12 @@ public class DataRead implements Runnable {
         list.add(worker5);
         list.add(worker6);
 
-        int k = 5;
+        int k = 4;
         for (int i = 0; i < workerNames.length; i++) {
             for (int j = 0; j < allWorkers.length; j++) {
                 if (allWorkers[j].equals(workerNames[i])) {
                     list.get(i + k).setSurname(workerNames[i]);
-                    list.get(i + k).setRate(workBook.getSheet("Сторона1").getRow(11).getCell(6).getNumericCellValue());
+                    list.get(i + k).setRate(workBook2.getSheet("Сторона1").getRow(11).getCell(6).getNumericCellValue());
                     list.get(i + k).setVolume(salaries[j] / list.get(i + k).getRate());
                     list.get(i + k).setSalary(salaries[j]);
                 }
