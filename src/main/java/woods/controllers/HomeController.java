@@ -1,6 +1,7 @@
 package woods.controllers;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,14 +9,30 @@ import org.springframework.web.bind.annotation.PostMapping;
 import woods.FilesListReader;
 import woods.OneFileRead;
 import woods.TwoFilesRead;
+import woods.data.AreaRepository;
+import woods.data.WoodRepository;
+import woods.data.WorkerRepository;
+import woods.datamodel.Area;
 import woods.datamodel.FilesDirectory;
 import woods.datamodel.WorkerStatistics;
+import woods.services.ExcelReadService;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Controller
 public class HomeController {
+
+    @Autowired
+    private WoodRepository woodRepository;
+
+    @Autowired
+    private WorkerRepository workerRepository;
 
     @GetMapping("/filepath")
     public String filepathForm(Model model) {
@@ -25,25 +42,7 @@ public class HomeController {
 
     @PostMapping("/filepath")
     public String filepathSubmit(FilesDirectory directory, Model model) {
-        directory.setFiles(new FilesListReader().filesListFormer(directory.getFilePath()));
-        List<String> files = directory.getFiles();
-        OneFileRead one;
-        TwoFilesRead two;
-        //model.addAttribute("files", files);
-        //return "filesListForm";
-        for(int i = 0; i < files.size(); i++){
-            boolean statement1 = (files.get(i).endsWith("заготовка.xls") && (files.get(i + 1).endsWith("трельовка.xls")));
-            boolean statement2 = (files.get(i).endsWith("заготовка(12-51).xls") && (files.get(i + 1).endsWith("трельовка(12-51).xls")));
-            if(statement1 || statement2){
-                two = new TwoFilesRead(files.get(i), files.get(i + 1));
-                two.thread.start();
-                model.addAttribute("area", two.getArea());
-            } else{
-                one = new OneFileRead(files.get(i));
-                one.thread.start();
-                model.addAttribute("area", one.getArea());
-            }
-        }
-        return "/data";
+        model.addAttribute("areas", ExcelReadService.getAreasList(directory));
+        return "data";
     }
 }

@@ -5,19 +5,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import lombok.Data;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
-import woods.datamodel.Area;
-import woods.datamodel.Months;
-import woods.datamodel.WoodTypes;
-import woods.datamodel.WorkerStatistics;
+import woods.datamodel.*;
 
 @Data
-public class TwoFilesRead implements Runnable {
+public class TwoFilesRead implements Callable<Area> {
 
-    public Thread thread;
     public String fileName;
     public String fileName2;
 
@@ -27,16 +24,15 @@ public class TwoFilesRead implements Runnable {
     public TwoFilesRead(String fileName, String fileName2) {
         this.fileName = fileName;
         this.fileName2 = fileName2;
-        thread = new Thread(this, "TwoThread");
     }
 
     HSSFWorkbook workBook;
     HSSFWorkbook workBook2;
     Area area = new Area();
+    List<Wood> woods = new ArrayList<>();
     List<WorkerStatistics> list = new ArrayList<WorkerStatistics>();
 
-    @Override
-    public void run() {
+    public Area call(){
         try (FileInputStream inputStream = new FileInputStream(new File(fileName))) {
 
             workBook = new HSSFWorkbook(inputStream);
@@ -54,8 +50,9 @@ public class TwoFilesRead implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        area.setList(list);
+        return area;
     }
-
 
     public void zagProcessor(String fileName) {
 
@@ -118,17 +115,42 @@ public class TwoFilesRead implements Runnable {
         woodsArray[5] = workBook.getSheet("Сторона1").getRow(26).getCell(3).getNumericCellValue();
         woodsArray[6] = workBook.getSheet("Сторона1").getRow(27).getCell(2).getNumericCellValue();
 
-        // assigning the respective read volume values to woodTypes in the database
-        WoodTypes[] woodTypes = WoodTypes.values();
         double woodsSum = 0;
-        for (WoodTypes woodType : woodTypes) {
-            int i = 0;
-            woodType.setVolume(woodsArray[i]);
+
+        woods.add(new Wood());
+        woods.get(0).setType(WoodTypes.ДІЛОВА);
+        woods.get(0).setVolume(woodsArray[0]);
+
+        woods.add(new Wood());
+        woods.get(1).setType(WoodTypes.ДЕРЕВИНА_ДРОВ_ХВ_П);
+        woods.get(1).setVolume(woodsArray[1]);
+
+        woods.add(new Wood());
+        woods.get(2).setType(WoodTypes.ДРОВА_ХВ_П);
+        woods.get(2).setVolume(woodsArray[2]);
+
+        woods.add(new Wood());
+        woods.get(3).setType(WoodTypes.ДРОВА_ТВ_П);
+        woods.get(3).setVolume(woodsArray[3]);
+
+        woods.add(new Wood());
+        woods.get(4).setType(WoodTypes.СУЧКИ);
+        woods.get(4).setVolume(woodsArray[4]);
+
+        woods.add(new Wood());
+        woods.get(5).setType(WoodTypes.ХВОРОСТ);
+        woods.get(5).setVolume(woodsArray[5]);
+
+        woods.add(new Wood());
+        woods.get(6).setType(WoodTypes.НЕЛІКВІД);
+        woods.get(6).setVolume(woodsArray[6]);
+
+        for (int i = 0; i < woods.size(); i++) {
             // calculating the value of woodsSum field
-            woodsSum += woodType.getVolume();
-            i++;
+            woodsSum += woods.get(i).getVolume();
         }
 
+        area.setWoods(woods);
         //assigning the value of woodsSum to respective field of area object
         area.setWoodsSum(woodsSum);
 
@@ -137,13 +159,11 @@ public class TwoFilesRead implements Runnable {
 
         //setting the necessary workerNames to read information about
         String[] workerNames = new String[4];
-        switch (fileName) {
-            case "заготовка(12-51).xls":
-                workerNames[0] = "Візнович Василь Степанович";
-                break;
-            case "заготовка.xls":
-                workerNames[0] = "Візнович Василь Степанович ";
-                break;
+
+        if(fileName.endsWith("заготовка(12-51).xls")) {
+            workerNames[0] = "Візнович Василь Степанович";
+        }else if(fileName.endsWith("заготовка.xls")){
+            workerNames[0] = "Візнович Василь Степанович ";
         }
         workerNames[1] = "Мединський Дмитро Володимирович";
         workerNames[2] = "Дорошенко Ігор Юрійович";
@@ -178,7 +198,8 @@ public class TwoFilesRead implements Runnable {
         for (int i = 0; i < workerNames.length; i++) {
             for (int j = 0; j < allWorkers.length; j++) {
                 if (allWorkers[j].equals(workerNames[i])) {
-                    list.get(i).setSurname(workerNames[i]);
+                    list.get(i).setWorker(new Worker());
+                    list.get(i).getWorker().setSurname(workerNames[i]);
                     list.get(i).setVolume(sumVolume * days[j] / sumDays);
                     list.get(i).setSalary(salaries[j]);
                 }
@@ -190,7 +211,7 @@ public class TwoFilesRead implements Runnable {
     public void trelProcessor(String fileName) {
 
         // reading the value of PMM2 from the Трельовка and assigning it to the the PMM2 field of area object
-        area.setPMM2(workBook2.getSheet("Сторона1").getRow(11).getCell(12).getNumericCellValue());
+        area.setPMM2(workBook2.getSheet("Сторона1").getRow(11).getCell(13).getNumericCellValue());
 
         //setting the necessary workerNames to read information about
         String[] workerNames = new String[2];
@@ -218,7 +239,8 @@ public class TwoFilesRead implements Runnable {
         for (int i = 0; i < workerNames.length; i++) {
             for (int j = 0; j < allWorkers.length; j++) {
                 if (allWorkers[j].equals(workerNames[i])) {
-                    list.get(i + k).setSurname(workerNames[i]);
+                    list.get(i + k).setWorker(new Worker());
+                    list.get(i + k).getWorker().setSurname(workerNames[i]);
                     list.get(i + k).setRate(workBook2.getSheet("Сторона1").getRow(11).getCell(6).getNumericCellValue());
                     list.get(i + k).setVolume(salaries[j] / list.get(i + k).getRate());
                     list.get(i + k).setSalary(salaries[j]);

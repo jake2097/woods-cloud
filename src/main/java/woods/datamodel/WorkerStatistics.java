@@ -1,13 +1,33 @@
 package woods.datamodel;
 
+import lombok.AccessLevel;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
-@Slf4j
+
+import javax.persistence.*;
+
+
 @Data
+@RequiredArgsConstructor
+@Entity
 public class WorkerStatistics {
-    private String surname;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
+
+    @ManyToOne(targetEntity = Worker.class)
+    private Worker worker;
     private double volume;
     private double salary;
     private double rate;
+
+    @Override
+    public String toString() {
+        return "\n" + worker +
+                " \nОб'єм: " + volume +
+                " \nЗарплата: " + salary + "\n";
+    }
 }

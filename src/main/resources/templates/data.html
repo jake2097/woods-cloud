@@ -5,6 +5,27 @@
     <title>Data</title>
 </head>
 <body>
-    <p th:text="${area}" ></p>
+<table>
+    <tr>
+        <th>Month</th>
+        <th>areaName</th>
+        <th>square</th>
+        <th>woodTypes</th>
+        <th>woodsSum</th>
+        <th>PMM1</th>
+        <th>PMM2</th>
+        <th>workersList</th>
+    </tr>
+    <tr th:each="area:${areas}">
+        <td th:text="${area.month}"></td>
+        <td th:text="${area.areaName}"></td>
+        <td th:text="${area.square}"></td>
+        <td th:text="${area.woods}"></td>
+        <td th:text="${area.woodsSum}"></td>
+        <td th:text="${area.PMM1}"></td>
+        <td th:text="${area.PMM2}"></td>
+        <td th:text="${area.list}"></td>
+    </tr>
+</table>
 </body>
 </html>

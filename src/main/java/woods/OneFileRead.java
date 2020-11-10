@@ -1,25 +1,25 @@
 package woods;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import woods.datamodel.Area;
 import woods.datamodel.Months;
+import woods.datamodel.Worker;
 import woods.datamodel.WorkerStatistics;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
-public class OneFileRead extends TwoFilesRead implements Runnable{
+public class OneFileRead extends TwoFilesRead implements Callable<Area> {
 
     public OneFileRead(){}
 
     public OneFileRead(String fileName){
         this.fileName = fileName;
-        this.thread = new Thread(this, "OneThread");
     }
 
-
-    @Override
-    public void run() {
+    public Area call(){
         try (FileInputStream inputStream = new FileInputStream(new File(fileName))) {
 
             workBook = new HSSFWorkbook(inputStream);
@@ -32,6 +32,8 @@ public class OneFileRead extends TwoFilesRead implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        area.setList(list);
+        return area;
     }
 
     @Override
@@ -42,7 +44,7 @@ public class OneFileRead extends TwoFilesRead implements Runnable{
     @Override
     public void trelProcessor(String fileName) {
         // reading the value of PMM2 from the Трельовка and assigning it to the the PMM2 field of area object
-        area.setPMM2(workBook.getSheet("Сторона1").getRow(11).getCell(12).getNumericCellValue());
+        area.setPMM2(workBook.getSheet("Сторона1").getRow(11).getCell(13).getNumericCellValue());
 
         //setting the necessary workerNames to read information about
         String[] workerNames = new String[2];
@@ -115,7 +117,8 @@ public class OneFileRead extends TwoFilesRead implements Runnable{
         for (int i = 0; i < workerNames.length; i++) {
             for (int j = 0; j < allWorkers.length; j++) {
                 if (allWorkers[j].equals(workerNames[i])) {
-                    list.get(i).setSurname(workerNames[i]);
+                    list.get(i).setWorker(new Worker());
+                    list.get(i).getWorker().setSurname(workerNames[i]);
                     list.get(i).setRate(workBook.getSheet("Сторона1").getRow(11).getCell(6).getNumericCellValue());
                     list.get(i).setVolume(salaries[j] / list.get(i).getRate());
                     list.get(i).setSalary(salaries[j]);
